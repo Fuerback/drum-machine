@@ -130,12 +130,11 @@ func (d *drumMachine) Render(pattern Pattern) (string, error) {
 func (d *drumMachine) Play(bpm int32) error {
 	render := strings.Trim(d.render, "|") // remove prefix and sufix from render
 	beats := strings.Split(render, "|")   // split render in beats
-	//var tempo float32
-	//tempo = float32(bpm) / 60
+	beatsPerSecond := bpm / 60
 
 	for _, beat := range beats {
 		fmt.Println(beat)
-		time.Sleep(time.Second)
+		time.Sleep(time.Duration(beatsPerSecond) * time.Second)
 	}
 
 	return nil
@@ -162,6 +161,6 @@ func main() {
 	}
 	fmt.Println(render)
 
-	drumMachine.Play(60)
+	drumMachine.Play(120)
 
 }
