@@ -131,16 +131,20 @@ func (d *drumMachine) Play(bpm int32) error {
 	render := strings.Trim(d.render, "|") // remove prefix and sufix from render
 	beats := strings.Split(render, "|")   // split render in beats
 	beatsPerSecond := bpm / 60
+	// TODO: work with floats
 
 	for _, beat := range beats {
 		fmt.Println(beat)
-		time.Sleep(time.Duration(beatsPerSecond) * time.Second)
+		time.Sleep(time.Second / time.Duration(beatsPerSecond))
 	}
 
 	return nil
 }
 
 func main() {
+	// hi-hat |x-x-|x-x-|x-x-|x-x-|
+	// snare  |----|x---|----|x---|
+	// kick   |x---|----|x---|----|
 	pattern := "hi-hat |x-x-|x-x-|x-x-|x-x-|\nsnare  |----|x---|----|x---|\nkick   |x---|----|x---|----|"
 	drumMachine := NewDrumMachine()
 	p, err := drumMachine.Parse(pattern)
@@ -161,6 +165,6 @@ func main() {
 	}
 	fmt.Println(render)
 
-	drumMachine.Play(120)
+	drumMachine.Play(180)
 
 }
