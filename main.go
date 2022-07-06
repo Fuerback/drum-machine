@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"strings"
+	"time"
 )
 
 type Pattern struct {
@@ -41,7 +42,9 @@ type Sequencer interface {
 	Play(bpm int32) error
 }
 
-type drumMachine struct{}
+type drumMachine struct {
+	render string
+}
 
 func NewDrumMachine() Sequencer {
 	return &drumMachine{}
@@ -57,35 +60,25 @@ func (d *drumMachine) Parse(pattern string) (Pattern, error) {
 	var instrumentNames []string
 	track := make([][]bool, 0)
 	rows := 0
-	scanner := bufio.NewScanner(strings.NewReader(pattern))
+	scanner := bufio.NewScanner(strings.NewReader(pattern)) // reading line by line
 	for scanner.Scan() {
 		before, after, found := strings.Cut(scanner.Text(), "|") // get instrument name
 		if !found {
 			continue
 		}
-		instrumentName := strings.TrimSpace(before) // remove white spaces from instrument name
-		//sequence := strings.Trim(after, "|")        // remove last | from sequence
+		instrumentName := strings.TrimSpace(before)    // remove white spaces from instrument name
 		sequence := strings.ReplaceAll(after, "|", "") // remove all | from sequence
-		//sequenceList := strings.Split(sequence, "|")
-		//if len(sequenceList) != 4 { // verify if sequence has four steps
-		//	continue
-		//}
 
 		instrumentNames = append(instrumentNames, instrumentName)
 		var row []bool
-		for _, v := range sequence {
-			//fmt.Println(rows, i)
+		for _, v := range sequence { // read sequence and saving the booleans in a list
 			row = append(row, getBooleanPlay(string(v)))
-			//track = append(track, [rows][i]bool{})
-			//track[rows][i] = getBooleanPlay(string(v))
 		}
 
-		track = append(track, row)
+		track = append(track, row) // saving the track row on the 2d slice
 		//fmt.Println(track)
 
-		rows++
-
-		//fmt.Println(instrumentName, sequence)
+		rows++ // next row
 	}
 	return Pattern{instrumentNames: instrumentNames, track: track}, nil
 }
@@ -99,8 +92,6 @@ func getBooleanPlay(beat string) bool {
 
 //|hi-hat,kick|-|hi-hat|-|hi-hat,snare|-|hi-hat|-|hi-hat,kick|-|hi-hat|-|hi-hat,snare|-|hi-hat|-|
 func (d *drumMachine) Render(pattern Pattern) (string, error) {
-	//fmt.Println(len(pattern.track), len(pattern.track[0]))
-
 	//fmt.Println(pattern.track[0][0])
 	//fmt.Println(pattern.track[1][0])
 	//fmt.Println(pattern.track[2][0])
@@ -131,10 +122,22 @@ func (d *drumMachine) Render(pattern Pattern) (string, error) {
 		play = divisor + play
 	}
 
+	d.render = play // add new render on drum machine
+
 	return play, nil
 }
 
 func (d *drumMachine) Play(bpm int32) error {
+	render := strings.Trim(d.render, "|") // remove prefix and sufix from render
+	beats := strings.Split(render, "|")   // split render in beats
+	//var tempo float32
+	//tempo = float32(bpm) / 60
+
+	for _, beat := range beats {
+		fmt.Println(beat)
+		time.Sleep(time.Second)
+	}
+
 	return nil
 }
 
@@ -147,16 +150,18 @@ func main() {
 	}
 
 	//instrumentNames := []string{"hi-hat", "snare", "kick"}
-	//track := [][16]bool{
+	//track := [][]bool{
 	//	{true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false},
 	//	{false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false},
 	//	{true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false},
 	//}
 	//p := Pattern{track: track, instrumentNames: instrumentNames}
-	play, err := drumMachine.Render(p)
+	render, err := drumMachine.Render(p)
 	if err != nil {
 		fmt.Println("error on Render pattern", err)
 	}
-	fmt.Println(play)
+	fmt.Println(render)
+
+	drumMachine.Play(60)
 
 }
