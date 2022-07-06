@@ -130,12 +130,15 @@ func (d *drumMachine) Render(pattern Pattern) (string, error) {
 func (d *drumMachine) Play(bpm int32) error {
 	render := strings.Trim(d.render, "|") // remove prefix and sufix from render
 	beats := strings.Split(render, "|")   // split render in beats
-	beatsPerSecond := bpm / 60
-	// TODO: work with floats
+
+	beatsPerSecond := float32(bpm) / 60 // get number of beats per second
+	fmt.Println(beatsPerSecond)
+	milisecondsToBeat := 1000 / beatsPerSecond // get the time in milisecond to wait until next beat
+	fmt.Println(milisecondsToBeat)
 
 	for _, beat := range beats {
-		fmt.Println(beat)
-		time.Sleep(time.Second / time.Duration(beatsPerSecond))
+		fmt.Print(beat)
+		time.Sleep(time.Millisecond * time.Duration(milisecondsToBeat))
 	}
 
 	return nil
@@ -165,6 +168,6 @@ func main() {
 	}
 	fmt.Println(render)
 
-	drumMachine.Play(180)
+	drumMachine.Play(30)
 
 }
