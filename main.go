@@ -60,30 +60,38 @@ func NewDrumMachine() Sequencer {
 func (d *drumMachine) Parse(pattern string) (Pattern, error) {
 	var instrumentNames []string
 	track := make([][]bool, 0)
-	rows := 0
+
 	scanner := bufio.NewScanner(strings.NewReader(pattern)) // reading line by line
 	for scanner.Scan() {
-		before, after, found := strings.Cut(scanner.Text(), "|") // get instrument name
-		if !found {
-			return Pattern{}, errors.New("incorrect format")
+		instrumentName, sequence, err := getInstrumentAndSequence(scanner.Text())
+		if err != nil {
+			return Pattern{}, err
 		}
-		instrumentName := strings.TrimSpace(before)    // remove white spaces from instrument name
-		sequence := strings.ReplaceAll(after, "|", "") // remove all | from sequence
 
 		if contains(instrumentNames, instrumentName) { // not the fastest way, but we should check the duplicated instrument names
 			return Pattern{}, errors.New("duplicated instrument name")
 		}
+
 		instrumentNames = append(instrumentNames, instrumentName)
-		var row []bool
+		var trackRow []bool
 		for _, v := range sequence { // read sequence and saving the booleans in a list
-			row = append(row, getBooleanPlay(string(v)))
+			trackRow = append(trackRow, getBooleanPlay(string(v)))
 		}
 
-		track = append(track, row) // saving the track row on the 2d slice
-
-		rows++ // next row
+		track = append(track, trackRow) // saving the track row on the 2d slice
 	}
+
 	return Pattern{instrumentNames: instrumentNames, track: track}, nil
+}
+
+func getInstrumentAndSequence(line string) (string, string, error) {
+	name, seq, found := strings.Cut(line, "|") // get instrument name and track
+	if !found {
+		return "", "", errors.New("incorrect format")
+	}
+	instrumentName := strings.TrimSpace(name)    // remove white spaces from instrument name
+	sequence := strings.ReplaceAll(seq, "|", "") // remove all | from sequence
+	return instrumentName, sequence, nil
 }
 
 func contains(s []string, e string) bool {
