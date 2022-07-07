@@ -51,6 +51,7 @@ func NewDrumMachine() Sequencer {
 	return &drumMachine{}
 }
 
+// expected return
 //instrumentNames := []string{"hi-hat", "snare", "kick"}
 //track := [][]bool{
 //	{true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false},
@@ -110,7 +111,7 @@ func getBooleanPlay(beat string) bool {
 	return false
 }
 
-//|hi-hat,kick|-|hi-hat|-|hi-hat,snare|-|hi-hat|-|hi-hat,kick|-|hi-hat|-|hi-hat,snare|-|hi-hat|-|
+// expected return |hi-hat,kick|-|hi-hat|-|hi-hat,snare|-|hi-hat|-|hi-hat,kick|-|hi-hat|-|hi-hat,snare|-|hi-hat|-|
 func (d *drumMachine) Render(pattern Pattern) (string, error) {
 	//fmt.Println(pattern.track[0][0])
 	//fmt.Println(pattern.track[1][0])
@@ -125,16 +126,18 @@ func (d *drumMachine) Render(pattern Pattern) (string, error) {
 
 	for i := 0; i < len(pattern.track[0]); i++ { // iterate over column
 		for j := 0; j < len(pattern.track); j++ { // iterate over rows
-			if pattern.track[j][i] {
+			if pattern.track[j][i] { // if it has a beat, store the instrument
 				columnPlay = append(columnPlay, pattern.instrumentNames[j])
 			}
 		}
+
 		if len(columnPlay) > 0 {
 			play += strings.Join(columnPlay, ",") // join comma
 			play += divisor                       // add divisor
 			columnPlay = nil                      // empty slice
 			continue                              // jump to the next column
 		}
+
 		play += "-" + divisor
 	}
 
@@ -152,9 +155,9 @@ func (d *drumMachine) Play(bpm int32) error {
 	beats := strings.Split(render, "|")   // split render in beats
 
 	beatsPerSecond := float32(bpm) / 60 // get number of beats per second
-	fmt.Println(beatsPerSecond)
+	fmt.Println(beatsPerSecond, "beats per second")
 	milisecondsToBeat := 1000 / beatsPerSecond // get the time in milisecond to wait until next beat
-	fmt.Println(milisecondsToBeat)
+	fmt.Println(milisecondsToBeat, "miliseconds")
 
 	for i, beat := range beats {
 		if i == 0 {
