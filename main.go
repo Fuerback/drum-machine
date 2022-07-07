@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -10,6 +11,7 @@ import (
 type Pattern struct {
 	instrumentNames []string
 	track           [][]bool
+	patternMap      map[string][][]bool
 }
 
 type Sequencer interface {
@@ -50,37 +52,36 @@ func NewDrumMachine() Sequencer {
 	return &drumMachine{}
 }
 
-//instrumentNames := []string{"hi-hat", "snare", "kick"}
-//track := [][16]bool{
-//	{true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false},
-//	{false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false},
-//	{true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false},
-//}
 func (d *drumMachine) Parse(pattern string) (Pattern, error) {
-	var instrumentNames []string
-	track := make([][]bool, 0)
-	rows := 0
+	patternMap := make(map[string][][]bool)
+
 	scanner := bufio.NewScanner(strings.NewReader(pattern)) // reading line by line
 	for scanner.Scan() {
-		before, after, found := strings.Cut(scanner.Text(), "|") // get instrument name
+		track := make([][]bool, 0)
+		instrument, trk, found := strings.Cut(scanner.Text(), "|") // get instrument name
 		if !found {
-			continue
+			return Pattern{}, errors.New("format incorrect")
 		}
-		instrumentName := strings.TrimSpace(before)    // remove white spaces from instrument name
-		sequence := strings.ReplaceAll(after, "|", "") // remove all | from sequence
+		instrumentName := strings.TrimSpace(instrument) // remove white spaces from instrument name
+		sequence := strings.ReplaceAll(trk, "|", "")    // remove all | from sequence
 
-		instrumentNames = append(instrumentNames, instrumentName)
 		var row []bool
 		for _, v := range sequence { // read sequence and saving the booleans in a list
 			row = append(row, getBooleanPlay(string(v)))
 		}
 
 		track = append(track, row) // saving the track row on the 2d slice
-		//fmt.Println(track)
 
-		rows++ // next row
+		_, found = patternMap[instrumentName]
+		if found { // verify if the instrument is duplicated
+			return Pattern{}, errors.New("instrument duplicated")
+		}
+		patternMap[instrumentName] = track // save track with using instrument as key
 	}
-	return Pattern{instrumentNames: instrumentNames, track: track}, nil
+
+	fmt.Println(patternMap)
+
+	return Pattern{patternMap: patternMap}, nil
 }
 
 func getBooleanPlay(beat string) bool {
@@ -102,6 +103,10 @@ func (d *drumMachine) Render(pattern Pattern) (string, error) {
 	var columnPlay []string
 	var play string
 	divisor := "|"
+
+	for instrument, track := range pattern.patternMap {
+		fmt.Println(instrument, track) // map is not a ordered collection
+	}
 
 	for i := 0; i < len(pattern.track[0]); i++ { // iterate over column
 		for j := 0; j < len(pattern.track); j++ { // iterate over rows
@@ -152,7 +157,7 @@ func main() {
 	drumMachine := NewDrumMachine()
 	p, err := drumMachine.Parse(pattern)
 	if err != nil {
-		fmt.Println("error on parse pattern", err)
+		fmt.Println("error on parse pattern:", err)
 	}
 
 	//instrumentNames := []string{"hi-hat", "snare", "kick"}
@@ -164,7 +169,7 @@ func main() {
 	//p := Pattern{track: track, instrumentNames: instrumentNames}
 	render, err := drumMachine.Render(p)
 	if err != nil {
-		fmt.Println("error on Render pattern", err)
+		fmt.Println("error on Render pattern:", err)
 	}
 	fmt.Println(render)
 
